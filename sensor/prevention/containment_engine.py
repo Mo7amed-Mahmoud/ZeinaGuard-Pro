@@ -1,9 +1,9 @@
 import time
 
-import config
-from config import DEAUTH_COUNT, DEAUTH_INTERVAL
+from sensor import config
+from sensor.config import DEAUTH_COUNT, DEAUTH_INTERVAL
 from scapy.all import Dot11, Dot11Deauth, RadioTap, sendp
-from ui.terminal_ui import client_kicked, log_attack, update_status
+from sensor.ui.terminal_ui import client_kicked, log_attack, update_status
 
 
 class ContainmentEngine:

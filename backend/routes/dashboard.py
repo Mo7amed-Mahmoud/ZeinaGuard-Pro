@@ -8,7 +8,7 @@ from functools import wraps
 from datetime import datetime, timedelta
 import random
 from ..auth import token_required
-from ..database import db
+from ..models import db
 
 dashboard_bp = Blueprint('dashboard', __name__, url_prefix='/api/dashboard')
 

@@ -1,0 +1,12 @@
+{
+  "CorpWiFi": {
+    "bssid": "AA:BB:CC:DD:EE:01",
+    "channel": 6,
+    "encryption": "WPA2"
+  },
+  "CorpWiFi-5G": {
+    "bssid": "AA:BB:CC:DD:EE:02",
+    "channel": 44,
+    "encryption": "WPA2"
+  }
+}

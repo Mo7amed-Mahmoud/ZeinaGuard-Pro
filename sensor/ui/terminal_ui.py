@@ -286,9 +286,9 @@ def _launch_manual_attack():
         update_status(message="Attack skipped: target channel unknown")
         return
 
-    from config import INTERFACE
-    from monitoring.sniffer import clients_map
-    from prevention.containment_engine import ContainmentEngine
+    from sensor.config import INTERFACE
+    from sensor.monitoring.sniffer import clients_map
+    from sensor.prevention.containment_engine import ContainmentEngine
 
     clients = clients_map.get(target_bssid, set())
     containment = ContainmentEngine(INTERFACE)

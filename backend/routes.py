@@ -3,14 +3,11 @@ API Routes for ZeinaGuard Pro Backend
 Handles authentication, threats, sensors, and other endpoints
 """
 
-from flask import Blueprint, request, jsonify, current_app
-from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
+from flask import Blueprint, request, jsonify
+from flask_jwt_extended import jwt_required
 from datetime import datetime
-from auth import (
-    AuthService, authenticate_user, token_required, 
-    admin_required, get_user_by_id
-)
-from websocket_server import broadcast_threat_event, broadcast_sensor_status
+from .auth import AuthService, authenticate_user, token_required, admin_required, get_user_by_id
+from .websocket_server import broadcast_threat_event
 
 # Create blueprints
 auth_bp = Blueprint('auth', __name__, url_prefix='/api/auth')
@@ -118,7 +115,7 @@ def get_current_user():
 def get_threats():
     """Get list of threats — real data from DB"""
     try:
-        from models import Threat
+        from .models import Threat
         limit = request.args.get('limit', default=50, type=int)
         offset = request.args.get('offset', default=0, type=int)
         severity = request.args.get('severity', default=None, type=str)
@@ -188,7 +185,7 @@ def get_threat(threat_id):
 def resolve_threat(threat_id):
     """Mark threat as resolved in DB"""
     try:
-        from models import Threat, db
+        from .models import Threat, db
         current_user = AuthService.get_current_user() or {}
         threat = Threat.query.get(threat_id)
         if threat:
@@ -232,7 +229,7 @@ def simulate_threat():
     This simulates what would happen when the detection engine finds a threat
     """
     try:
-        from models import Threat, Alert, db
+        from .models import Threat, Alert, db
         import random, string
         current_user = AuthService.get_current_user() or {}
         data = request.get_json(silent=True) or {}
@@ -293,8 +290,8 @@ def simulate_threat():
 def get_sensors():
     """Get list of sensors — real data from DB + live WebSocket status overlay"""
     try:
-        from models import Sensor
-        from websocket_server import get_connected_sensors
+        from .models import Sensor
+        from .websocket_server import get_connected_sensors
         live = get_connected_sensors()
         sensors = Sensor.query.all()
         result = []
@@ -349,7 +346,7 @@ def get_sensor_health(sensor_id):
 def get_alerts():
     """Get list of alerts — real data from DB"""
     try:
-        from models import Alert
+        from .models import Alert
         limit = request.args.get('limit', default=100, type=int)
         alerts = Alert.query.order_by(Alert.created_at.desc()).limit(limit).all()
         return jsonify({'data': [{
@@ -372,12 +369,12 @@ def get_alerts():
 def acknowledge_alert(alert_id):
     """Acknowledge an alert"""
     try:
-        from models import Alert, db
+        from .models import Alert, db
         current_user = AuthService.get_current_user() or {}
         alert = Alert.query.get(alert_id)
         if alert:
             alert.is_acknowledged = True
-            alert.acknowledged_by = current_user.get('username', 'anonymous')
+            alert.acknowledged_by = None
             alert.acknowledged_at = datetime.utcnow()
             db.session.commit()
         return jsonify({
@@ -397,7 +394,7 @@ def acknowledge_alert(alert_id):
 def get_threat_stats():
     """Get threat statistics from DB"""
     try:
-        from models import Threat, db
+        from .models import Threat, db
         from sqlalchemy import func
         total = Threat.query.count()
         today = datetime.utcnow().date()
@@ -434,7 +431,7 @@ def get_threat_stats():
 def get_trends():
     """Get last-7-day daily threat counts from DB"""
     try:
-        from models import Threat, Sensor, db
+        from .models import Threat, Sensor, db
         from sqlalchemy import func
         from datetime import timedelta
         daily = []
@@ -474,8 +471,8 @@ def get_user_profile():
 
 def register_blueprints(app):
     """Register all API blueprints"""
-    from routes_dashboard import dashboard_bp
-    from routes_topology import topology_bp
+    from .routes_dashboard import dashboard_bp
+    from .routes_topology import topology_bp
     
     app.register_blueprint(auth_bp)
     app.register_blueprint(threats_bp)

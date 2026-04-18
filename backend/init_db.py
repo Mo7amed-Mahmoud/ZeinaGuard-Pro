@@ -5,14 +5,16 @@ Run this after first deployment
 """
 
 import os
-from app import app, db
-from models import (
+
+from .app import app
+from .models import db
+from .models import (
     User, Role, Permission, Sensor, SensorHealth,
     Threat, ThreatEvent, AlertRule, Alert, Incident,
     IncidentEvent, Report, AuditLog, NetworkTopology,
     BlockedDevice
 )
-from auth import hash_password
+from .auth import hash_password
 from datetime import datetime
 
 

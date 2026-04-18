@@ -1,4 +1,5 @@
-import os
+from __future__ import annotations
+
 import socket
 import threading
 import time
@@ -7,34 +8,36 @@ from queue import Empty
 
 import socketio
 
-from config import BACKEND_URL, SENSOR_ID
-from core.event_bus import dashboard_queue, scan_queue
-from local_data_logger import LocalDataLogger
-from ui.terminal_ui import mark_sent, update_status
-
-
-SCAN_EMIT_BATCH_SIZE = int(os.getenv("SCAN_EMIT_BATCH_SIZE", "25"))
-SCAN_EMIT_INTERVAL_SECONDS = float(os.getenv("SCAN_EMIT_INTERVAL_SECONDS", "3.0"))
-SCAN_DEDUP_SIGNAL_DELTA = int(os.getenv("SCAN_DEDUP_SIGNAL_DELTA", "5"))
-SCAN_DEDUP_MAX_AGE_SECONDS = float(os.getenv("SCAN_DEDUP_MAX_AGE_SECONDS", "30"))
+from sensor.communication.api_client import APIClient
+from sensor.config import BACKEND_URL, SENSOR_ID, settings
+from sensor.core.event_bus import dashboard_queue, scan_queue, telemetry_queue
+from sensor.local_data_logger import LocalDataLogger
+from sensor.ui.terminal_ui import mark_sent, update_status
 
 
 class WSClient:
-    def __init__(self, backend_url=None, token=None, sensor_id=None):
+    def __init__(self, backend_url=None, token=None, sensor_id=None, api_client: APIClient | None = None):
         self.backend_url = (backend_url or BACKEND_URL).rstrip("/")
-        self.token = token
         self.hostname = socket.gethostname()
         self.sensor_id = sensor_id or SENSOR_ID
         self.started_at = time.time()
         self.is_running = False
-        self.last_sent_cache = {}
-        self.send_buffer = []
+        self.emit_lock = threading.Lock()
+        self.last_sent_cache: dict[str, dict[str, object]] = {}
+        self.scan_buffer: list[dict[str, object]] = []
+        self.packet_buffer: list[dict[str, object]] = []
+
+        self.token = token
+        self.api_client = api_client or APIClient(self.backend_url)
+        if self.token:
+            self.api_client.token = self.token
 
         self.local_logger = LocalDataLogger()
         self.sio = socketio.Client(
             reconnection=True,
             reconnection_attempts=0,
-            reconnection_delay=3,
+            reconnection_delay=2,
+            reconnection_delay_max=10,
             logger=False,
             engineio_logger=False,
         )
@@ -44,10 +47,13 @@ class WSClient:
         @self.sio.event
         def connect():
             update_status(backend_status="connected", message=f"Connected to {self.backend_url}")
-            self.sio.emit("sensor_register", {
-                "sensor_id": self.sensor_id,
-                "hostname": self.hostname,
-            })
+            self.sio.emit(
+                "sensor_register",
+                {
+                    "sensor_id": self.sensor_id,
+                    "hostname": self.hostname,
+                },
+            )
 
         @self.sio.event
         def disconnect():
@@ -55,7 +61,7 @@ class WSClient:
 
         @self.sio.event
         def connect_error(_data):
-            update_status(backend_status="offline", message="Backend connect failed")
+            update_status(backend_status="offline", message="Backend connection failed")
 
         @self.sio.on("registration_success")
         def registration_success(_data):
@@ -64,58 +70,90 @@ class WSClient:
     def start(self):
         self.is_running = True
         threading.Thread(target=self._scan_listener, daemon=True, name="WSScanListener").start()
+        threading.Thread(target=self._packet_listener, daemon=True, name="WSPacketListener").start()
         threading.Thread(target=self._threat_listener, daemon=True, name="WSThreatListener").start()
+        threading.Thread(target=self._heartbeat_loop, daemon=True, name="WSHeartbeat").start()
 
-        if not self.token:
-            update_status(backend_status="offline", message="Offline mode: local logging only")
-            while self.is_running:
-                time.sleep(1)
-            return
-
+        backoff_seconds = 2
         while self.is_running:
             if self.sio.connected:
                 time.sleep(1)
                 continue
+
+            token = self._ensure_token()
+            if not token:
+                update_status(backend_status="offline", message="Backend unavailable; retrying authentication")
+                time.sleep(backoff_seconds)
+                backoff_seconds = min(backoff_seconds * 2, 30)
+                continue
+
             try:
                 update_status(backend_status="connecting", message=f"Connecting to {self.backend_url}")
                 self.sio.connect(
                     self.backend_url,
-                    headers={"Authorization": f"Bearer {self.token}"},
-                    transports=["websocket"],
+                    headers={"Authorization": f"Bearer {token}"},
+                    transports=["websocket", "polling"],
                     wait=True,
                 )
+                backoff_seconds = 2
                 self.sio.wait()
             except Exception:
-                update_status(backend_status="offline", message="Retrying backend connection in 5s")
-                time.sleep(5)
+                self.token = None
+                update_status(backend_status="offline", message="Retrying backend connection")
+                time.sleep(backoff_seconds)
+                backoff_seconds = min(backoff_seconds * 2, 30)
 
-    def _threat_listener(self):
+    def _ensure_token(self) -> str | None:
+        if self.token:
+            return self.token
+
+        self.token = self.api_client.authenticate_sensor()
+        return self.token
+
+    def _heartbeat_loop(self) -> None:
+        while self.is_running:
+            if self.sio.connected:
+                try:
+                    self.sio.emit(
+                        "sensor_heartbeat",
+                        {
+                            "sensor_id": self.sensor_id,
+                            "hostname": self.hostname,
+                            "timestamp": datetime.utcnow().isoformat(),
+                        },
+                    )
+                except Exception:
+                    update_status(backend_status="degraded", message="Heartbeat send failed")
+            time.sleep(15)
+
+    def _threat_listener(self) -> None:
         while self.is_running:
             try:
                 threat = dashboard_queue.get(timeout=0.5)
             except Empty:
                 continue
-            if not threat or threat.get("type") == "REMOVED" or not self.sio.connected:
+
+            if not threat or threat.get("type") == "REMOVED":
                 continue
+
             event = threat.get("event", {})
             payload = {
                 "threat_type": threat.get("status"),
+                "classification": "ATTACK" if threat.get("status") == "ROGUE" else "SUSPICIOUS",
                 "ssid": event.get("ssid"),
                 "source_mac": event.get("bssid"),
-                "signal": event.get("signal"),
-                "severity": "HIGH",
+                "signal_strength": event.get("signal"),
+                "severity": "high",
                 "score": threat.get("score", 0),
                 "reasons": threat.get("reasons", []),
                 "sensor_id": self.sensor_id,
                 "hostname": self.hostname,
+                "description": f"Sensor-side rogue AP heuristic fired for {event.get('ssid')}",
             }
-            try:
-                self.sio.emit("new_threat", payload)
-            except Exception:
-                update_status(backend_status="degraded", message="Threat send failed")
+            self._emit("new_threat", payload)
 
-    def _scan_listener(self):
-        next_flush_deadline = time.monotonic() + SCAN_EMIT_INTERVAL_SECONDS
+    def _scan_listener(self) -> None:
+        next_flush_deadline = time.monotonic() + settings.scan_emit_interval_seconds
         while self.is_running:
             try:
                 timeout = max(0.1, next_flush_deadline - time.monotonic())
@@ -128,19 +166,61 @@ class WSClient:
                     continue
                 payload = self._build_scan_payload(scan)
                 self.local_logger.log_scan(payload)
-                self.send_buffer.append(payload)
+                self.scan_buffer.append(payload)
                 self._update_last_sent_cache(payload)
 
             should_flush = (
-                len(self.send_buffer) >= SCAN_EMIT_BATCH_SIZE
-                or (self.send_buffer and time.monotonic() >= next_flush_deadline)
+                len(self.scan_buffer) >= settings.scan_emit_batch_size
+                or (self.scan_buffer and time.monotonic() >= next_flush_deadline)
             )
-            if not should_flush:
-                continue
+            if should_flush and self.sio.connected:
+                sent = self._emit("network_scan", self._build_scan_batch_payload(self.scan_buffer))
+                if sent:
+                    self._mark_scan_batch_sent(self.scan_buffer)
+                    self.scan_buffer = []
+                    next_flush_deadline = time.monotonic() + settings.scan_emit_interval_seconds
 
-            self._flush_scan_batch(self.send_buffer)
-            self.send_buffer = []
-            next_flush_deadline = time.monotonic() + SCAN_EMIT_INTERVAL_SECONDS
+    def _packet_listener(self) -> None:
+        next_flush_deadline = time.monotonic() + settings.packet_emit_interval_seconds
+        while self.is_running:
+            try:
+                timeout = max(0.1, next_flush_deadline - time.monotonic())
+                packet_event = telemetry_queue.get(timeout=timeout)
+            except Empty:
+                packet_event = None
+
+            if packet_event is not None:
+                self.packet_buffer.append(packet_event)
+
+            should_flush = (
+                len(self.packet_buffer) >= settings.packet_emit_batch_size
+                or (self.packet_buffer and time.monotonic() >= next_flush_deadline)
+            )
+            if should_flush and self.sio.connected:
+                sent = self._emit(
+                    "packet_telemetry",
+                    {
+                        "sensor_id": self.sensor_id,
+                        "hostname": self.hostname,
+                        "sent_at": datetime.utcnow().isoformat(),
+                        "packets": list(self.packet_buffer),
+                    },
+                )
+                if sent:
+                    self.packet_buffer = []
+                    next_flush_deadline = time.monotonic() + settings.packet_emit_interval_seconds
+
+    def _emit(self, event_name: str, payload: dict[str, object]) -> bool:
+        if not self.sio.connected:
+            return False
+
+        try:
+            with self.emit_lock:
+                self.sio.emit(event_name, payload)
+            return True
+        except Exception:
+            update_status(backend_status="degraded", message=f"{event_name} send failed")
+            return False
 
     def _should_process_scan(self, scan):
         bssid = str(scan.get("bssid") or "").strip().upper()
@@ -154,13 +234,13 @@ class WSClient:
             return True
         if cached.get("classification") != scan.get("classification", "UNKNOWN"):
             return True
-        return (now - cached.get("last_sent", 0)) > SCAN_DEDUP_MAX_AGE_SECONDS
+        return (now - float(cached.get("last_sent", 0))) > settings.scan_dedup_max_age_seconds
 
     def _signal_changed(self, previous, current):
         if previous is None or current is None:
             return previous != current
         try:
-            return abs(int(current) - int(previous)) >= SCAN_DEDUP_SIGNAL_DELTA
+            return abs(int(current) - int(previous)) >= settings.scan_dedup_signal_delta
         except (TypeError, ValueError):
             return previous != current
 
@@ -173,22 +253,13 @@ class WSClient:
                 "last_sent": time.time(),
             }
 
-    def _flush_scan_batch(self, batch):
-        if not batch or not self.sio.connected:
-            return
-        try:
-            self.sio.emit("network_scan", self._build_scan_batch_payload(batch))
-            self._mark_scan_batch_sent(batch)
-        except Exception:
-            update_status(backend_status="degraded", message="Network scan send failed")
-
     def _build_scan_batch_payload(self, batch):
         return {
             "sensor_id": self.sensor_id,
             "hostname": self.hostname,
             "sent_at": datetime.utcnow().isoformat(),
             "networks": [
-                {k: v for k, v in scan.items() if k not in {"sensor_id", "hostname"}}
+                {key: value for key, value in scan.items() if key not in {"sensor_id", "hostname"}}
                 for scan in batch
             ],
         }

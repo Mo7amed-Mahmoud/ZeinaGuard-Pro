@@ -4,7 +4,7 @@ Provides graph-compatible JSON data for network visualization
 """
 
 from flask import Blueprint, jsonify, request
-from topology_mock_data import get_mock_topology_data
+from .topology_mock_data import get_mock_topology_data
 
 # Create blueprint
 topology_bp = Blueprint('topology', __name__, url_prefix='/api/topology')

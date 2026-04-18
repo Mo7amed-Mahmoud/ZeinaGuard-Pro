@@ -7,8 +7,8 @@ from flask import Blueprint, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from datetime import datetime, timedelta
 from sqlalchemy import func, desc
-from models import (
-    Threat, ThreatEvent, Sensor, SensorHealth, 
+from .models import (
+    Threat, ThreatEvent, Sensor, SensorHealth,
     Incident, Alert, User, AlertRule, db
 )
 
@@ -104,16 +104,6 @@ def get_threat_timeline():
         hours_back = 24
         time_threshold = datetime.utcnow() - timedelta(hours=hours_back)
         
-        # Get threats grouped by hour
-        threats = db.session.query(
-            func.date_trunc('hour', Threat.created_at).label('hour'),
-            Threat.severity,
-            func.count(Threat.id).label('count')
-        ).filter(
-            Threat.created_at >= time_threshold
-        ).group_by('hour', Threat.severity).order_by('hour').all()
-        
-        # Format for timeline chart
         timeline = {}
         for hour_start in (time_threshold + timedelta(hours=i) for i in range(hours_back)):
             hour_key = hour_start.strftime('%Y-%m-%d %H:00')
@@ -125,10 +115,13 @@ def get_threat_timeline():
                 'info': 0
             }
         
+        threats = Threat.query.filter(Threat.created_at >= time_threshold).all()
         for threat in threats:
-            hour_key = threat[0].strftime('%Y-%m-%d %H:00')
+            if threat.created_at is None:
+                continue
+            hour_key = threat.created_at.replace(minute=0, second=0, microsecond=0).strftime('%Y-%m-%d %H:00')
             if hour_key in timeline:
-                timeline[hour_key][threat[1]] = threat[2]
+                timeline[hour_key][threat.severity] = timeline[hour_key].get(threat.severity, 0) + 1
         
         return jsonify({
             'timeline': timeline,

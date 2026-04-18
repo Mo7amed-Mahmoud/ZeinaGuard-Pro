@@ -1,4 +1,3 @@
-import os
 import requests
 
 
@@ -6,14 +5,15 @@ class APIClient:
     """REST client for authenticating the sensor with the ZeinaGuard backend."""
 
     def __init__(self, backend_url=None):
-        from config import BACKEND_URL, SENSOR_USERNAME, SENSOR_PASSWORD
+        from sensor.config import BACKEND_URL, SENSOR_USERNAME, SENSOR_PASSWORD
+
         self.backend_url = (backend_url or BACKEND_URL).rstrip("/")
         self.username = SENSOR_USERNAME
         self.password = SENSOR_PASSWORD
         self.token = None
 
     def authenticate_sensor(self):
-        from ui.terminal_ui import update_status
+        from sensor.ui.terminal_ui import update_status
 
         url = f"{self.backend_url}/api/auth/login"
         payload = {"username": self.username, "password": self.password}

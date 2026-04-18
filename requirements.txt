@@ -1,0 +1,3 @@
+-r backend/requirements.txt
+-r sensor/requirements.txt
+pytest>=9.0.0

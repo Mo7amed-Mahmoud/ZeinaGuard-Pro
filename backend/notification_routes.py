@@ -4,7 +4,7 @@ Handles webhook and email configuration endpoints
 """
 
 from flask import Blueprint, request, jsonify
-from notifications_mock import notification_service
+from .notifications_mock import notification_service
 import logging
 
 # Create blueprint

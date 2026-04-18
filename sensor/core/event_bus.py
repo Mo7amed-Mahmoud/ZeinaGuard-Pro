@@ -1,13 +1,13 @@
+from __future__ import annotations
+
 from queue import Queue
 
-# Sniffer -> ThreatManager
-event_queue = Queue()
+from sensor.config import settings
 
-# ThreatManager -> ResponseEngine
+
+raw_packet_queue = Queue(maxsize=settings.raw_packet_queue_size)
+event_queue = Queue(maxsize=settings.parsed_packet_queue_size)
+telemetry_queue = Queue(maxsize=settings.parsed_packet_queue_size)
 containment_queue = Queue()
-
-# ThreatManager -> backend threat stream
 dashboard_queue = Queue()
-
-# ThreatManager -> backend/local scan storage
-scan_queue = Queue()
+scan_queue = Queue(maxsize=settings.parsed_packet_queue_size)

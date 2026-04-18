@@ -1,8 +1,8 @@
 import time
 
-from core.event_bus import containment_queue, dashboard_queue, event_queue, scan_queue
-from detection.risk_engine import RiskEngine
-from ui.terminal_ui import remove_ap, update_ap, update_status
+from sensor.core.event_bus import containment_queue, dashboard_queue, event_queue, scan_queue
+from sensor.detection.risk_engine import RiskEngine
+from sensor.ui.terminal_ui import remove_ap, update_ap, update_status
 
 
 class ThreatManager:

@@ -9,20 +9,26 @@ import { io, Socket } from 'socket.io-client';
 export interface ThreatEvent {
   type: 'threat_detected';
   timestamp: string;
+  classification?: 'NORMAL' | 'SUSPICIOUS' | 'ATTACK';
   severity: 'critical' | 'high' | 'medium' | 'low' | 'info';
   threat_type: string;
   data: {
-    id: number;
+    id: number | null;
     threat_type: string;
     severity: string;
-    source_mac: string;
-    ssid: string;
-    detected_by: number;
+    classification?: 'NORMAL' | 'SUSPICIOUS' | 'ATTACK';
+    source_mac: string | null;
+    target_mac?: string | null;
+    ssid: string | null;
+    bssid?: string | null;
+    detected_by: number | null;
+    detected_by_sensor?: string;
     description: string;
-    signal_strength: number;
+    signal_strength: number | null;
     packet_count: number;
     is_resolved: boolean;
     created_at: string;
+    metadata?: Record<string, unknown>;
   };
 }
 
@@ -48,10 +54,11 @@ export interface LiveScanNetwork {
   signal: number;
   encryption: string;
   manufacturer: string;
-  classification: 'LEGIT' | 'SUSPICIOUS' | 'ROGUE';
+  classification: 'LEGIT' | 'SUSPICIOUS' | 'ROGUE' | 'NORMAL' | 'ATTACK';
   score: number;
   clients?: number;
   distance?: number;
+  reasons?: string[];
 }
 
 export interface LiveScanEvent {

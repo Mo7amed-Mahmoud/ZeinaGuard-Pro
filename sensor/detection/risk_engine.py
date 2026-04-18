@@ -1,18 +1,13 @@
-# detection/risk_engine.py
-
 class RiskEngine:
     def __init__(self, trusted_aps=None):
-        # لو مفيش قايمة جاية من الـ API، هيسحب اللي في الـ config كاحتياطي
         if trusted_aps is None:
-            from config import TRUSTED_APS
+            from sensor.config import TRUSTED_APS
+
             self.trusted_aps = TRUSTED_APS
         else:
             self.trusted_aps = trusted_aps
 
     def analyze(self, event):
-        """
-        يحلل event ويحسب درجة الخطورة.
-        """
         score = 0
         reasons = []
 
@@ -23,44 +18,36 @@ class RiskEngine:
         encryption = event.get("encryption")
         clients = event.get("clients", 0)
 
-        # 🔹 Open network مع عملاء متصلين
         if encryption == "OPEN" and clients > 0:
             score += 5
             reasons.append("Open network with connected clients")
 
-        # 🔹 الشبكة معروفة / trusted
         if ssid in self.trusted_aps:
             trusted = self.trusted_aps[ssid]
-
-            # Evil Twin (SSID مطابق لكن BSSID مختلف)
-            if bssid.lower() != trusted["bssid"].lower():
+            trusted_bssid = str(trusted.get("bssid") or "").lower()
+            if trusted_bssid and bssid and bssid.lower() != trusted_bssid:
                 score += 6
-                reasons.append("Evil Twin suspected (BSSID Spoofing)")
+                reasons.append("Evil twin suspected (BSSID mismatch)")
             else:
-                # 🚀 التعديل الأمني: لو المهاجم قلد الـ MAC بس غير التشفير لـ OPEN
                 trusted_enc = trusted.get("encryption", "SECURED")
                 if encryption != trusted_enc:
                     score += 6
-                    reasons.append(f"Encryption downgrade (Expected {trusted_enc}, got {encryption})")
+                    reasons.append(f"Encryption downgrade (expected {trusted_enc}, got {encryption})")
 
-            # Channel mismatch
-            if channel != trusted["channel"]:
+            trusted_channel = trusted.get("channel")
+            if trusted_channel and channel != trusted_channel:
                 score += 2
                 reasons.append("Channel mismatch")
-
-        # 🔹 SSID غير معروف
         else:
             score += 3
-            reasons.append("SSID not trusted")
+            reasons.append("SSID not in trusted baseline")
 
-        # 🔹 إشارة قوية بشكل غير طبيعي
         if signal is not None and signal > -30:
             score += 2
             reasons.append("Unusually strong signal")
 
         classification = self.classify(score)
-
-        event_summary = {
+        return {
             "classification": classification,
             "score": score,
             "reasons": reasons,
@@ -78,11 +65,10 @@ class RiskEngine:
             "raw_beacon": event.get("raw_beacon", ""),
         }
 
-        return event_summary
-
-    def classify(self, score):
+    @staticmethod
+    def classify(score):
         if score >= 6:
             return "ROGUE"
-        elif score >= 3:
+        if score >= 3:
             return "SUSPICIOUS"
         return "LEGIT"
