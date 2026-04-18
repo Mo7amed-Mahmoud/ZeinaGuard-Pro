@@ -1,0 +1,148 @@
+[~/ZeinaGuard]
+$ sudo bash run.sh 
+
+══════════════════════════════════════════
+   ZeinaGuard Pro — Startup              
+══════════════════════════════════════════
+
+[ZeinaGuard] Virtual environment found — activating…
+[ZeinaGuard] Virtual environment active: /home/ln0rag/ZeinaGuard/venv
+[ZeinaGuard] Running as root — full packet-capture capability enabled.
+[ZeinaGuard] Starting ZeinaGuard backend…
+[ZeinaGuard] Backend running (PID 834482).
+[ZeinaGuard] Starting ZeinaGuard sensor agent…
+/usr/lib/python3/dist-packages/scapy/layers/ipsec.py:512: CryptographyDeprecationWarning: TripleDES has been moved to cryptography.hazmat.decrepit.ciphers.algorithms.TripleDES and will be removed from cryptography.hazmat.primitives.ciphers.algorithms in 48.0.0.
+  cipher=algorithms.TripleDES,
+/usr/lib/python3/dist-packages/scapy/layers/ipsec.py:516: CryptographyDeprecationWarning: TripleDES has been moved to cryptography.hazmat.decrepit.ciphers.algorithms.TripleDES and will be removed from cryptography.hazmat.primitives.ciphers.algorithms in 48.0.0.
+  cipher=algorithms.TripleDES,
+
+=======================================================
+  ZeinaGuard — Network Interface Selection
+=======================================================
+
+  Detected wireless interfaces:
+    [1] wlan0
+    [2] wlan1
+
+  Other interfaces:
+    [3] vethfae936e
+    [4] vethc9551c6
+    [5] lo
+    [6] br-1b35d27c398e
+    [7] docker0
+    [8] eth0
+    [9] virbr0
+    [10] vethfc1ced6
+
+  Enter interface name or number [1-10]: [Redis] Not available — running without Redis event persistence
+[WARN] JWT_SECRET_KEY not set. Using a temporary per-process secret — sessions will reset on restart. Set JWT_SECRET_KEY in Secrets for production.
+[DB] Database tables created/verified
+Werkzeug appears to be used in a production deployment. Consider switching to a production web server instead.
+ * Serving Flask app 'app'
+ * Debug mode: off
+WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:8000
+ * Running on http://192.168.111.19:8000
+Press CTRL+C to quit
+2
+
+  Selected interface: wlan1
+=======================================================
+
+╭─────────────────────────────────────────────────────────────── ZeinaGuard Sensor ───────────────────────────────────────────────────────────────╮
+│ A: All | R: Rogue | S: Suspicious | L: Legit | H: Hunt | Q: Quit                                                                                │
+│ Sensor: starting | Backend: authenticating                                                                                                      │
+╭─────────────────────────────────────────────────────────────── ZeinaGuard Sensor ───────────────────────────────────────────────────────────────╮
+│ A: All | R: Rogue | S: Suspicious | L: Legit | H: Hunt | Q: Quit                                                                                │
+Exception in thread UIKeyboard:
+Traceback (most recent call last):
+  File "/usr/lib/python3.11/threading.py", line 1038, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.11/threading.py", line 975, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ln0rag/ZeinaGuard/sensor/ui/terminal_ui.py", line 494, in keyboard_listener
+    key = readchar.readkey()
+          ^^^^^^^^^^^^^^^^^^
+  File "/home/ln0rag/ZeinaGuard/venv/lib/python3.11/site-packages/readchar/_posix_read.py", line 37, in readkey
+    raise KeyboardInterrupt
+KeyboardInterrupt
+╭─────────────────────────────────────────────────────────────── ZeinaGuard Sensor ───────────────────────────────────────────────────────────────╮
+╭─────────────────────────────────────────────────────────────── ZeinaGuard Sensor ───────────────────────────────────────────────────────────────╮
+╭─────────────────────────────────────────────────────────────── ZeinaGuard Sensor ───────────────────────────────────────────────────────────────╮
+╭─────────────────────────────────────────────────────────────── ZeinaGuard Sensor ───────────────────────────────────────────────────────────────╮
+╭─────────────────────────────────────────────────────────────── ZeinaGuard Sensor ───────────────────────────────────────────────────────────────╮
+╭─────────────────────────────────────────────────────────────── ZeinaGuard Sensor ───────────────────────────────────────────────────────────────╮
+│ A: All | R: Rogue | S: Suspicious | L: Legit | H: Hunt | Q: Quit                                                                                │
+╭─────────────────────────────────────────────────────────────── ZeinaGuard Sensor ───────────────────────────────────────────────────────────────╮
+╭─────────────────────────────────────────────────────────────── ZeinaGuard Sensor ───────────────────────────────────────────────────────────────╮
+│ A: All | R: Rogue | S: Suspicious | L: Legit | H: Hunt | Q: Quit                                                                                │
+╭─────────────────────────────────────────────────────────────── ZeinaGuard Sensor ───────────────────────────────────────────────────────────────╮
+╭─────────────────────────────────────────────────────────────── ZeinaGuard Sensor ───────────────────────────────────────────────────────────────╮
+│ A: All | R: Rogue | S: Suspicious | L: Legit | H: Hunt | Q: Quit                                                                                │
+╭─────────────────────────────────────────────────────────────── ZeinaGuard Sensor ───────────────────────────────────────────────────────────────╮
+│ A: All | R: Rogue | S: Suspicious | L: Legit | H: Hunt | Q: Quit                                                                                │
+╭─────────────────────────────────────────────────────────────── ZeinaGuard Sensor ───────────────────────────────────────────────────────────────╮
+╭─────────────────────────────────────────────────────────────── ZeinaGuard Sensor ───────────────────────────────────────────────────────────────╮
+╭─────────────────────────────────────────────────────────────── ZeinaGuard Sensor ───────────────────────────────────────────────────────────────╮
+╭─────────────────────────────────────────────────────────────── ZeinaGuard Sensor ───────────────────────────────────────────────────────────────╮
+╭─────────────────────────────────────────────────────────────── ZeinaGuard Sensor ───────────────────────────────────────────────────────────────╮
+│ A: All | R: Rogue | S: Suspicious | L: Legit | H: Hunt | Q: Quit                                                                                │
+│ Sensor: monitoring | Backend: offline                                                                                                           │
+│ Live: 0 | Rogue: 0 | Suspicious: 0 | Legit: 0                                                                                                   │
+│ Filter: ALL | Hunt target: None                                                                                                                 │
+│ Sent count: 0                                                                                                                                   │
+│ Status: Retrying backend connection in 5s                                                                                                       │
+╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+                                                                Live Networks [ALL]                                                                
+╭───────────────────────────────┬──────────────────┬───────────┬─────────────────────┬──────────────────────────┬──────────────────┬──────────────╮
+│ SSID                          │ BSSID            │    CH     │       Signal        │         Distance         │      Class       │     Seen     │
+├───────────────────────────────┼──────────────────┼───────────┼─────────────────────┼──────────────────────────┼──────────────────┼──────────────┤
+╭─────────────────────────────────────────────────────────────── ZeinaGuard Sensor ───────────────────────────────────────────────────────────────╮
+│ A: All | R: Rogue | S: Suspicious | L: Legit | H: Hunt | Q: Quit                                                                                │
+│ Sensor: monitoring | Backend: offline                                                                                                           │
+│ Live: 0 | Rogue: 0 | Suspicious: 0 | Legit: 0                                                                                                   │
+│ Filter: ALL | Hunt target: None                                                                                                                 │
+│ Sent count: 0                                                                                                                                   │
+│ Status: Retrying backend connection in 5s                                                                                                       │
+╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+                                                                Live Networks [ALL]                                                                
+╭───────────────────────────────┬──────────────────┬───────────┬─────────────────────┬──────────────────────────┬──────────────────┬──────────────╮
+│ SSID                          │ BSSID            │    CH     │       Signal        │         Distance         │      Class       │     Seen     │
+├───────────────────────────────┼──────────────────┼───────────┼─────────────────────┼──────────────────────────┼──────────────────┼──────────────┤
+│ Waiting...                    │ -                │     -     │          -          │            -             │        -         │      -       │
+╰───────────────────────────────┴──────────────────┴───────────┴─────────────────────┴──────────────────────────┴──────────────────┴──────────────╯
+                                                                                                                                                   
+                                                                                                                                                   
+                                                                                                                                                   
+                                                                                                                                                   
+                                                                                                                                                   
+                                                                                                                                                   
+                                                                                                                                                   
+                                                                                                                                                   
+                                                                                                                                                   
+                                                                                                                                                   
+                                                                                                                                                   
+                                                                                                                                                   
+╭────────────────────────────────────────────────────────────────── Recent Sent ──────────────────────────────────────────────────────────────────╮
+│ No transmissions yet                                                                                                                            │
+│                                                                                                                                                 │
+│                                                                                                                                                 │
+│                                                                                                                                                 │
+│                                                                                                                                                 │
+│                                                                                                                                                 │
+│                                                                                                                                                 │
+│                                                                                                                                                 │
+│                                                                                                                                                 │
+│                                                                                                                                                 │
+│                                                                                                                                                 │
+│                                                                                                                                                 │
+╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+[ZeinaGuard] Shutdown signal received — cleaning up…
+[ZeinaGuard] Stopping backend (PID 834482)…
+[ZeinaGuard] Deactivating virtual environment…
+[ZeinaGuard] ZeinaGuard stopped cleanly. Goodbye.
+[~/ZeinaGuard]
+$ ^C
+[~/ZeinaGuard]
+$ 

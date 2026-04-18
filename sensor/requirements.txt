@@ -1,0 +1,7 @@
+scapy>=2.5.0
+python-socketio[client]>=5.10.0
+websocket-client>=1.6.0
+requests>=2.31.0
+rich>=13.0.0
+readchar>=4.0.0
+python-dotenv>=1.0.0

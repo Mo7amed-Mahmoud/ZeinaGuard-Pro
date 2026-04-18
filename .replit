@@ -1,0 +1,35 @@
+modules = ["python-3.11"]
+[nix]
+channel = "stable-25_05"
+packages = ["cargo", "iana-etc", "imagemagickBig", "libiconv", "libxcrypt", "openssl", "pkg-config", "rustc", "sox", "tcpdump", "wireshark"]
+
+[agent]
+expertMode = true
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Start application"
+
+[[workflows.workflow]]
+name = "Start application"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd backend && python3 app.py"
+waitForPort = 8000
+
+[workflows.workflow.metadata]
+outputType = "console"
+
+[[ports]]
+localPort = 8000
+externalPort = 8000

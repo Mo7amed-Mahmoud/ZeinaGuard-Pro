@@ -1,0 +1,83 @@
+/* Network Topology Visualization Styles */
+
+/* Shared Node Highlighting - Gold Glow */
+.node-shared {
+  filter: drop-shadow(0 0 12px rgba(234, 179, 8, 0.8)) 
+          drop-shadow(0 0 6px rgba(234, 179, 8, 0.6));
+  animation: shared-pulse 2s ease-in-out infinite;
+}
+
+/* Threat Pulse Animation - Red Aura */
+.node-threat {
+  animation: threat-pulse 1s ease-in-out infinite;
+}
+
+@keyframes shared-pulse {
+  0% {
+    filter: drop-shadow(0 0 8px rgba(234, 179, 8, 0.6)) 
+            drop-shadow(0 0 4px rgba(234, 179, 8, 0.4));
+  }
+  50% {
+    filter: drop-shadow(0 0 16px rgba(234, 179, 8, 1)) 
+            drop-shadow(0 0 10px rgba(234, 179, 8, 0.8));
+  }
+  100% {
+    filter: drop-shadow(0 0 8px rgba(234, 179, 8, 0.6)) 
+            drop-shadow(0 0 4px rgba(234, 179, 8, 0.4));
+  }
+}
+
+@keyframes threat-pulse {
+  0% {
+    filter: drop-shadow(0 0 0px rgba(239, 68, 68, 0));
+  }
+  50% {
+    filter: drop-shadow(0 0 20px rgba(239, 68, 68, 1)) 
+            drop-shadow(0 0 12px rgba(239, 68, 68, 0.8));
+  }
+  100% {
+    filter: drop-shadow(0 0 0px rgba(239, 68, 68, 0));
+  }
+}
+
+/* Smooth transitions for node hover states */
+.react-flow__node {
+  transition: all 0.2s ease;
+}
+
+.react-flow__node:hover {
+  transform: scale(1.05);
+}
+
+/* Enhanced edge styling */
+.react-flow__edge-path {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.react-flow__edge.animated path {
+  animation: dashedAnimation 0.5s linear infinite;
+}
+
+@keyframes dashedAnimation {
+  to {
+    stroke-dashoffset: -5;
+  }
+}
+
+/* Responsive controls */
+.react-flow__controls {
+  background: rgba(30, 41, 59, 0.9) !important;
+  border: 1px solid rgba(71, 85, 105, 0.5) !important;
+}
+
+.react-flow__controls button {
+  background: rgba(71, 85, 105, 0.3) !important;
+  color: rgba(148, 163, 184, 1) !important;
+  border: 1px solid rgba(71, 85, 105, 0.5) !important;
+}
+
+.react-flow__controls button:hover {
+  background: rgba(71, 85, 105, 0.5) !important;
+  color: rgba(226, 232, 240, 1) !important;
+}
